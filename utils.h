@@ -1,5 +1,8 @@
 #include "offset.h"
 #include <vector>
+#include <chrono>
+#include <cmath>
+#include <iostream>
 
 typedef struct _D3DMATRIX {
 	union {
@@ -8,7 +11,6 @@ typedef struct _D3DMATRIX {
 			float        _21, _22, _23, _24;
 			float        _31, _32, _33, _34;
 			float        _41, _42, _43, _44;
-
 		};
 		float m[4][4];
 	};
@@ -51,13 +53,12 @@ static D3DMATRIX CreateMatrix(FVector rot) {
 	return matrix;
 }
 
-
-
 static POINT WorldToScreen(FMinimalViewInfo camera, FVector WorldLocation)
 {
-	POINT Screenlocation{0, 0};
-	const D3DMATRIX tempMatrix = CreateMatrix(camera.Rotation);
+	auto start = std::chrono::high_resolution_clock::now();
 
+	POINT Screenlocation{ 0, 0 };
+	const D3DMATRIX tempMatrix = CreateMatrix(camera.Rotation);
 
 	FVector vAxisX{ tempMatrix.m[0][0], tempMatrix.m[0][1], tempMatrix.m[0][2] };
 	FVector vAxisY{ tempMatrix.m[1][0], tempMatrix.m[1][1], tempMatrix.m[1][2] };
@@ -71,13 +72,14 @@ static POINT WorldToScreen(FMinimalViewInfo camera, FVector WorldLocation)
 
 	const float FOV_DEG_TO_RAD = static_cast<float>(3.14159265358979323846) / 360.f;
 
-
 	Screenlocation.x = ScreenCenterX + vTransformed.x * (ScreenCenterX / tanf(camera.FOV * FOV_DEG_TO_RAD)) / vTransformed.z;
 	Screenlocation.y = ScreenCenterY - vTransformed.y * (ScreenCenterX / tanf(camera.FOV * FOV_DEG_TO_RAD)) / vTransformed.z;
 
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> duration = end - start;
+
 	return Screenlocation;
 }
-
 
 static std::string GetNameById(uint32_t actor_id)
 {

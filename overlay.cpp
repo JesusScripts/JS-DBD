@@ -40,7 +40,7 @@ auto Nvidia::window_set_transparency() -> void {
     color_key = 0x000000;
     opacity = 0xFF;
 
-    SetLayeredWindowAttributes(win, color_key, opacity, opacity_flag);
+//    SetLayeredWindowAttributes(win, color_key, opacity, opacity_flag);
 }
 
 auto Nvidia::window_set_top_most() -> void {
@@ -64,7 +64,6 @@ auto Nvidia::window_init() -> BOOL {
 
     return TRUE;
 }
-
 /*
 Overlay functions
 */
@@ -125,7 +124,7 @@ auto Nvidia::init_d2d() -> BOOL {
     if (FAILED(ret))
         return FALSE;
 
-    
+
     GetClientRect(Nvidia::retrieve_window(), &rc);
 
     ret = d2d_factory->CreateHwndRenderTarget(
@@ -204,19 +203,19 @@ auto Nvidia::draw_text(int x, int y, const char* str, bool center, int color, fl
         cur_brush = purple_brush;
     else if (color == 10)
         cur_brush = black_brush;
-   
+
     if (center) {
         x -= (int)textWidth / 2;
     }
 
     tar->DrawTextLayout(D2D1::Point2F(x, y), textLayout, cur_brush);
-   // tar->DrawText(b, len, format, D2D1::RectF(x, y, 1920, 1080), cur_brush,D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_NATURAL);
+    // tar->DrawText(b, len, format, D2D1::RectF(x, y, 1920, 1080), cur_brush,D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_NATURAL);
 }
 
 auto Nvidia::draw_line(int x, int y, int x2, int y2, float thickness, int color, ...)-> void {
-    
 
-    if (color == 0) 
+
+    if (color == 0)
         cur_brush = brush;
     else if (color == 1)
         cur_brush = red_brush;

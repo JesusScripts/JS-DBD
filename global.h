@@ -61,7 +61,7 @@ bool corneredBox = false;
 
 bool showmenu = true;
 bool rendering = true;
-int frame = 0;
+int frame = 10;
 
 FVector localOrigin = {};
 
