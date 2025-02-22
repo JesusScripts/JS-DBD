@@ -3,9 +3,10 @@
 #include "overlay.h"
 #include <vector>
 
+
 uintptr_t uWorld = 0;
 
-uintptr_t gameInstance =0;
+uintptr_t gameInstance = 0;
 
 uintptr_t persistentLevel = 0;
 
@@ -61,7 +62,7 @@ bool corneredBox = false;
 
 bool showmenu = true;
 bool rendering = true;
-int frame = 10;
+int frame = 0;
 
 FVector localOrigin = {};
 

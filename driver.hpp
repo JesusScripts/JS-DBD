@@ -240,7 +240,9 @@ namespace mem {
 template <typename T>
 T read2(uintptr_t address) {
 	T buffer{ };
-	mem::read_physical(address, &buffer, sizeof(T));
+	
+	
+	_physical(address, &buffer, sizeof(T));
 	return buffer;
 }
 

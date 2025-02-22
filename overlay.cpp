@@ -40,7 +40,7 @@ auto Nvidia::window_set_transparency() -> void {
     color_key = 0x000000;
     opacity = 0xFF;
 
-//    SetLayeredWindowAttributes(win, color_key, opacity, opacity_flag);
+   SetLayeredWindowAttributes(win, color_key, opacity, opacity_flag);
 }
 
 auto Nvidia::window_set_top_most() -> void {

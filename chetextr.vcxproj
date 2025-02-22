@@ -138,6 +138,7 @@
     <ClInclude Include="crypt.h" />
     <ClInclude Include="driver.hpp" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="mem.h" />
     <ClInclude Include="offset.h" />
     <ClInclude Include="overlay.h" />

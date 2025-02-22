@@ -11,20 +11,16 @@
 #include <cstring>
 #include <stdio.h>
 #include <string.h>
-#include <chrono>
-#include <mutex>
-
-std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
-int frameCount = 0;
-float fps = 0.0f;
 
 HWND hGameWnd;
 HWND hOverlayWnd;
 RECT wndRect;
 
 void checkKeys() {
-    while (true) {
-        if (rendering) {
+    while (true)
+    {
+        if (rendering)
+        {
             if (GetAsyncKeyState(VK_F1) & 1)
                 if (showmenu)
                     esp = !esp;
@@ -56,22 +52,25 @@ void checkKeys() {
             if (GetAsyncKeyState(VK_F8) & 1)
                 if (showmenu)
                     freecamera = !freecamera;
+
         }
         if (GetAsyncKeyState(VK_INSERT) & 1)
             showmenu = !showmenu;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Reduce CPU usage
     }
 }
 
 cameraMultipliers generateMultipliers(float yaw, float pitch) {
+
     cameraMultipliers multipliers;
 
+
     multipliers.yawMultiplierX = (-abs(yaw) + 90) / 90;
+
     multipliers.yawMultiplierY = abs(yaw);
     if (multipliers.yawMultiplierY > 90) {
         multipliers.yawMultiplierY -= 90;
         multipliers.yawMultiplierY = 90 - multipliers.yawMultiplierY;
+
     }
 
     if (abs(yaw) / yaw == -1) {
@@ -80,37 +79,42 @@ cameraMultipliers generateMultipliers(float yaw, float pitch) {
     multipliers.yawMultiplierY *= -1;
     multipliers.yawMultiplierY /= 90;
 
+
+
     multipliers.pitchMultiplier = -1 * abs(pitch) / 90 * abs(pitch) / pitch;
 
     return multipliers;
 }
 
 void unlockCamera() {
-    float minYaw = -179.9f;
-    float maxYaw = 179.9f;
-    mem::write_physical((PVOID)(cameraManager + 0x3334), &minYaw, sizeof(float));
-    mem::write_physical((PVOID)(cameraManager + 0x3338), &maxYaw, sizeof(float));
+    write<float>(cameraManager + 0x3334, -179.9f);
+    write<float>(cameraManager + 0x3338, 179.9f);
 }
 
 void lockCamera() {
-    float minYaw = -40.0f;
-    float maxYaw = 50.0f;
-    mem::write_physical((PVOID)(cameraManager + 0x3334), &minYaw, sizeof(float));
-    mem::write_physical((PVOID)(cameraManager + 0x3338), &maxYaw, sizeof(float));
+    write<float>(cameraManager + 0x3334, -40.0f);
+    write<float>(cameraManager + 0x3338, 50.0f);
 }
 
 void updateCamera() {
+
     float multiplier;
     float yaw, pitch;
     cameraMultipliers multipliers;
     float step = 15;
+    float stepY;
+    float stepX;
+
     bool cameraLock = true;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    Sleep(1000);
     while (true) {
+
         multiplier = 1;
+
         yaw = cameraCache.POV.Rotation.y;
         pitch = cameraCache.POV.Rotation.x;
+
 
         if (!freecamera) {
             lastCameraPos.x = cameraCache.POV.Location.x;
@@ -122,8 +126,12 @@ void updateCamera() {
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
         }
-        else {
+
+
+        else if (freecamera) {
+
             if (cameraLock) {
                 unlockCamera();
                 cameraLock = !cameraLock;
@@ -135,16 +143,16 @@ void updateCamera() {
 
             if (GetAsyncKeyState('W') & 0x8000) {
                 multipliers = generateMultipliers(yaw, pitch);
-                lastCameraPos.x += step * multiplier * multipliers.yawMultiplierX;
-                lastCameraPos.y -= step * multiplier * multipliers.yawMultiplierY;
-                lastCameraPos.z -= step * multiplier * multipliers.pitchMultiplier;
+                lastCameraPos.x += 15 * multiplier * multipliers.yawMultiplierX;
+                lastCameraPos.y -= 15 * multiplier * multipliers.yawMultiplierY;
+                lastCameraPos.z -= 15 * multiplier * multipliers.pitchMultiplier;
             }
 
             if (GetAsyncKeyState('S') & 0x8000) {
                 multipliers = generateMultipliers(yaw, pitch);
-                lastCameraPos.x -= step * multiplier * multipliers.yawMultiplierX;
-                lastCameraPos.y += step * multiplier * multipliers.yawMultiplierY;
-                lastCameraPos.z += step * multiplier * multipliers.pitchMultiplier;
+                lastCameraPos.x -= 15 * multiplier * multipliers.yawMultiplierX;
+                lastCameraPos.y += 15 * multiplier * multipliers.yawMultiplierY;
+                lastCameraPos.z += 15 * multiplier * multipliers.pitchMultiplier;
             }
 
             if (GetAsyncKeyState('A') & 0x8000) {
@@ -152,8 +160,9 @@ void updateCamera() {
                 if (yaw < -180)
                     yaw = 180 - (-180 - yaw);
                 multipliers = generateMultipliers(yaw, pitch);
-                lastCameraPos.x += step * multiplier * multipliers.yawMultiplierX;
-                lastCameraPos.y -= step * multiplier * multipliers.yawMultiplierY;
+                lastCameraPos.x += 15 * multiplier * multipliers.yawMultiplierX;
+                lastCameraPos.y -= 15 * multiplier * multipliers.yawMultiplierY;
+
             }
 
             if (GetAsyncKeyState('D') & 0x8000) {
@@ -161,49 +170,53 @@ void updateCamera() {
                 if (yaw > 180)
                     yaw = (180 - (yaw - 180)) * -1;
                 multipliers = generateMultipliers(yaw, pitch);
-                lastCameraPos.x += step * multiplier * multipliers.yawMultiplierX;
-                lastCameraPos.y -= step * multiplier * multipliers.yawMultiplierY;
+                lastCameraPos.x += 15 * multiplier * multipliers.yawMultiplierX;
+                lastCameraPos.y -= 15 * multiplier * multipliers.yawMultiplierY;
             }
 
             if (GetAsyncKeyState(VK_SPACE) & 0x8000) {
-                lastCameraPos.z += step * multiplier;
+                lastCameraPos.z += 15 * multiplier;
             }
 
             if (GetAsyncKeyState(VK_CONTROL) & 0x8000) {
-                lastCameraPos.z -= step * multiplier;
+                lastCameraPos.z -= 15 * multiplier;
             }
 
-            std::this_thread::sleep_for(std::chrono::microseconds(100)); // Reduced sleep duration
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
         }
+
     }
 }
 
 void setCameraCash() {
+    Sleep(1250);
     constexpr size_t OffsetPOV = 0x10;
     constexpr size_t OffsetLocation = OffsetPOV + offsetof(FMinimalViewInfo, Location);
 
+
     while (true) {
+
         if (!freecamera) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
         try {
-            mem::write_physical((PVOID)(cameraManager + offsets::CameraCachePrivate + OffsetLocation), &lastCameraPos, sizeof(FVector));
+            write(cameraManager + offsets::CameraCachePrivate + OffsetLocation, lastCameraPos);
         }
         catch (...) {
             continue;
         }
+
     }
+
 }
 
-std::mutex playersMutex;
-std::mutex miscsMutex;
-std::mutex cameraMutex;
 
 void setupEntities() {
-    std::vector<Entity> players;
-    std::vector<Entity> miscs;
+    std::vector<Entity> players = {};
+    std::vector<Entity> miscs = {};
     int localId;
 
     Entity entity;
@@ -212,8 +225,11 @@ void setupEntities() {
     int entId;
     uintptr_t root_component;
 
+
     while (true) {
+
         try {
+            std::cout << "1" << std::endl;
             uWorld = read<uintptr_t>(process_base + offsets::GWorld);
             gameInstance = read<uintptr_t>(uWorld + offsets::OwningGameInstance);
             localPlayerPtr = read<uintptr_t>(gameInstance + offsets::LocalPlayers);
@@ -226,18 +242,14 @@ void setupEntities() {
             Localpawn = read<uintptr_t>(playerController + offsets::AcknowledgedPawn);
             localId = read<int>(Localpawn + 0x190);
             cameraManager = read<uintptr_t>(playerController + offsets::PlayerCameraManager);
-
-            {
-                std::lock_guard<std::mutex> lock(cameraMutex);
-                cameraCache = read<FCameraCacheEntry>(cameraManager + offsets::CameraCachePrivate);
-            }
-
-            players.clear();
-            miscs.clear();
+            cameraCache = read<FCameraCacheEntry>(cameraManager + offsets::CameraCachePrivate);
 
             for (int i = 0; i < actorsCount; ++i) {
+              //  std::cout << "2 " << std::endl;
                 entity = {};
+
                 actor = read<uintptr_t>(actorsArray + i * 0x8);
+
                 playerState = read<uintptr_t>(actor + offsets::PlayerState);
 
                 if (!actor)
@@ -245,107 +257,149 @@ void setupEntities() {
 
                 entity.id = read<int>(actor + offsets::ActorID);
 
-                std::string entityName = GetNameById(entity.id);
-                if (entityName.find("BP_CamperMale") != std::string::npos || entityName.find("BP_CamperFemale") != std::string::npos || entityName.find("BP_Slasher") != std::string::npos) {
+                if (GetNameById(entity.id).find("BP_CamperMale") != std::string::npos || GetNameById(entity.id).find("BP_CamperFemale") != std::string::npos || GetNameById(entity.id).find("BP_Slasher") != std::string::npos)
+                {
+                    std::cout << "2 " << std::endl;
                     entId = read<int>(actor + 0x190);
                     root_component = read<uintptr_t>(actor + offsets::RootComponent);
 
                     if (localId == entId) {
                         localOrigin = read<FVector>(root_component + offsets::RelativeLocation);
-                        localIsSlasher = (entityName.find("BP_Slasher") != std::string::npos);
+                        if (GetNameById(entity.id).find("BP_Slasher") != std::string::npos)
+                            localIsSlasher = true;
+                        else
+                            localIsSlasher = false;
                         continue;
                     }
 
                     entity.origin = read<FVector>(root_component + offsets::RelativeLocation);
+
                     entity.distTo = ToMeters(localOrigin.DistTo(entity.origin)) - 2;
 
-                    if (entityName.find("BP_CamperMale") != std::string::npos)
+                    if (GetNameById(entity.id).find("BP_CamperMale") != std::string::npos)
                         entity.nameId = 1;
-                    else if (entityName.find("BP_CamperFemale") != std::string::npos)
+
+                    if (GetNameById(entity.id).find("BP_CamperFemale") != std::string::npos)
                         entity.nameId = 2;
-                    else if (entityName.find("BP_Slasher") != std::string::npos)
+
+                    if (GetNameById(entity.id).find("BP_Slasher") != std::string::npos)
                         entity.nameId = 3;
 
                     players.push_back(entity);
+
                 }
-                else if (entityName.find("Pallet") != std::string::npos || entityName.find("BP_IND_ExitGate") != std::string::npos) {
+                else if ((GetNameById(entity.id).find("Pallet") != std::string::npos) || (GetNameById(entity.id).find("BP_IND_ExitGate") != std::string::npos)) {
+
                     entId = read<int>(actor + 0x190);
                     root_component = read<uintptr_t>(actor + offsets::RootComponent);
 
                     entity.origin = read<FVector>(root_component + offsets::RelativeLocation);
                     entity.distTo = ToMeters(localOrigin.DistTo(entity.origin)) - 2;
 
-                    if (entityName.find("Pallet") != std::string::npos)
+                    if (GetNameById(entity.id).find("Pallet") != std::string::npos)
                         entity.nameId = 4;
-                    else if (entityName.find("BP_IND_ExitGate") != std::string::npos)
+
+                    if (GetNameById(entity.id).find("BP_IND_ExitGate") != std::string::npos)
                         entity.nameId = 5;
 
                     miscs.push_back(entity);
                 }
+                else
+                    continue;
+
             }
         }
-        catch (const std::exception& e) {
-            std::cerr << "Exception in setupEntities: " << e.what() << std::endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        catch (...) {
+            misc2Draw = miscs;
+            players2Draw = players;
+            miscs.clear();
+            players.clear();
             continue;
         }
 
-        {
-            std::lock_guard<std::mutex> lockPlayers(playersMutex);
-            players2Draw = players;
-        }
-        {
-            std::lock_guard<std::mutex> lockMiscs(miscsMutex);
-            misc2Draw = miscs;
-        }
+        misc2Draw = miscs;
+        players2Draw = players;
+        miscs.clear();
+        players.clear();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 }
 
 void drawESPmisc(Nvidia* overlay) {
+
     const char* compareStrPallet = "Pallet";
     const char* compareStrGate = "Gate";
 
     char str[256];
 
-    for (const Entity& entity : misc2Draw) {
+    for (Entity entity : misc2Draw) {
+
         POINT lowPoint = WorldToScreen(cameraCache.POV, { entity.origin.x, entity.origin.y , entity.origin.z - 70 });
         POINT midPoint = WorldToScreen(cameraCache.POV, { entity.origin.x, entity.origin.y , entity.origin.z });
         POINT highPoint = WorldToScreen(cameraCache.POV, { entity.origin.x, entity.origin.y , entity.origin.z + 70 });
 
         if (drawMisc) {
+
             if (entity.nameId == 4) {
+
                 std::sprintf(str, "Pallet [%dm.]", entity.distTo);
+
                 overlay->draw_text(lowPoint.x, lowPoint.y - 40, str, true, 4, 10);
             }
+
             else if (entity.nameId == 5) {
+
                 std::sprintf(str, "Gate [%dm.]", entity.distTo);
                 overlay->draw_text(highPoint.x, highPoint.y, str, true, 5, 14);
             }
+
         }
     }
+
 }
 
 void drawESP(Nvidia* overlay) {
-    for (const Entity& player : players2Draw) {
+
+    //POINT localOnScreen = WorldToScreen(cameraCache.POV, localOrigin);
+
+    for (Entity player : players2Draw) {
+
+        if (!esp) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            continue;
+        }
         POINT screenLeg = WorldToScreen(cameraCache.POV, { player.origin.x, player.origin.y , player.origin.z - 70 });
         POINT screenHead = WorldToScreen(cameraCache.POV, { player.origin.x, player.origin.y , player.origin.z + 85 });
 
         int deltaY = abs(screenLeg.y - screenHead.y);
 
+        const char* compareStr = "Killer";
+        const char* compareStrFem = "FemaleSurvivor";
+        const char* compareStrMan = "MaleSurvivor";
+
         char str[256];
+
         int colorIndex = 2;
 
         if (espLine) {
-            if (localIsSlasher || player.nameId == 3) {
+            if (localIsSlasher) {
+                colorIndex = 1;
+            }
+            else if (player.nameId == 3) {
                 colorIndex = 1;
             }
             overlay->draw_line(ScreenCenterX, sHeight, screenLeg.x, screenLeg.y, 1.5, colorIndex);
+
         }
 
         if (box) {
-            if (localIsSlasher || player.nameId == 3) {
+
+            if (localIsSlasher) {
+
+                colorIndex = 1;
+            }
+            else if (player.nameId == 3) {
                 colorIndex = 1;
             }
 
@@ -353,52 +407,147 @@ void drawESP(Nvidia* overlay) {
                 overlay->draw_rect_box(screenHead.x - deltaY / 3.4, screenHead.y, screenHead.x + deltaY / 3.4, screenHead.y, screenLeg.x - deltaY / 3.4, screenLeg.y, screenLeg.x + deltaY / 3.4, screenLeg.y, 1.2, colorIndex);
             }
             else {
+
                 overlay->draw_box(screenHead.x - deltaY / 3.4, screenHead.y, screenHead.x + deltaY / 3.4, screenHead.y, screenLeg.x - deltaY / 3.4, screenLeg.y, screenLeg.x + deltaY / 3.4, screenLeg.y, 3, 10);
                 overlay->draw_box(screenHead.x - deltaY / 3.4, screenHead.y, screenHead.x + deltaY / 3.4, screenHead.y, screenLeg.x - deltaY / 3.4, screenLeg.y, screenLeg.x + deltaY / 3.4, screenLeg.y, 1.2, colorIndex);
+
             }
         }
 
         if (infoEsp) {
+
             if (player.nameId == 1) {
+
                 std::sprintf(str, "FemaleSurvivor [%dm.]", player.distTo);
+
+                overlay->draw_text(screenHead.x, screenHead.y - 14, str, true, 0, 9.5);
             }
+
             else if (player.nameId == 2) {
+
                 std::sprintf(str, "MaleSurvivor [%dm.]", player.distTo);
+
+                overlay->draw_text(screenHead.x, screenHead.y - 14, str, true, 0, 9.5);
             }
+
             else if (player.nameId == 3) {
+
                 std::sprintf(str, "Killer [%dm.]", player.distTo);
+
+                overlay->draw_text(screenHead.x, screenHead.y - 14, str, true, 0, 9.5);
             }
-            overlay->draw_text(screenHead.x, screenHead.y - 14, str, true, 0, 9.5);
+
         }
+
     }
+
 }
 
 void drawMenu(Nvidia* overlay) {
+
     overlay->draw_text(15, 5, "SHOW/HIDE [INSERT] vanoware", false, 0, 11);
 
-    char fpsText[50];
-    sprintf(fpsText, "FPS: %.2f", fps);
-    overlay->draw_text(15, 25, fpsText, false, 0, 11);
+    if (showmenu && rendering)
+    {
+        if (esp)
+            overlay->draw_text(15, 20, "F1 Esp : ON", false, 2, 11);
+        else
+            overlay->draw_text(15, 20, "F1 Esp : OFF", false, 1, 11);
 
-    if (showmenu && rendering) {
-        overlay->draw_text(15, 40, esp ? "F1 Esp : ON" : "F1 Esp : OFF", false, esp ? 2 : 1, 11);
-        overlay->draw_text(15, 60, infoEsp ? "F2 info Esp : ON" : "F2 info Esp : OFF", false, infoEsp ? 2 : 1, 11);
-        overlay->draw_text(15, 80, drawMisc ? "F3 Misc ESP : ON" : "F3 Misc ESP : OFF", false, drawMisc ? 2 : 1, 11);
-        overlay->draw_text(15, 100, espLine ? "F4 ESPLine : ON" : "F4 ESPLine : OFF", false, espLine ? 2 : 1, 11);
-        overlay->draw_text(15, 120, box ? "F6 BOX : ON" : "F6 BOX : OFF", false, box ? 2 : 1, 11);
-        overlay->draw_text(15, 140, corneredBox ? "F7 BOX CORNER MODE : ON" : "F7 BOX CORNER MODE : OFF", false, corneredBox ? 2 : 1, 11);
-        overlay->draw_text(15, 160, freecamera ? "F8 freecamera : ON" : "F8 freecamera : OFF", false, freecamera ? 2 : 1, 11);
+        if (infoEsp)
+            overlay->draw_text(15, 40, "F2 info Esp : ON", false, 2, 11);
+        else
+            overlay->draw_text(15, 40, "F2 info Esp : OFF", false, 1, 11);
+
+        if (drawMisc)
+            overlay->draw_text(15, 60, "F3 Misc ESP : ON", false, 2, 11);
+        else
+            overlay->draw_text(15, 60, "F3 Misc ESP : OFF", false, 1, 11);
+
+        if (espLine)
+            overlay->draw_text(15, 80, "F4 ESPLine : ON", false, 2, 11);
+        else
+            overlay->draw_text(15, 80, "F4 ESPLine : OFF", false, 1, 11);
+
+        if (box)
+            overlay->draw_text(15, 120, "F6 BOX : ON", false, 2, 11);
+        else
+            overlay->draw_text(15, 120, "F6 BOX : OFF", false, 1, 11);
+
+        if (corneredBox)
+            overlay->draw_text(15, 140, "F7 BOX CORNER MODE : ON", false, 2, 11);
+        else
+            overlay->draw_text(15, 140, "F7 BOX CORNER MODE : OFF", false, 1, 11);
+
+        if (freecamera)
+            overlay->draw_text(15, 160, "F8 freecamera : ON", false, 2, 11);
+        else
+            overlay->draw_text(15, 160, "F8 freecamera : OFF", false, 1, 11);
+
     }
+
 }
+
+
+void updateWindow();
+
+
+static void _init(Nvidia* overlay)
+{
+    Sleep(50);
+    std::thread(checkKeys).detach();
+
+    std::thread(setupEntities).detach();
+
+    std::thread(updateWindow).detach();
+
+    std::thread(updateCamera).detach();
+
+    std::thread(setCameraCash).detach();
+
+    if (!overlay->window_init())
+        return;
+
+    if (!overlay->init_d2d())
+        return;
+
+    int i = 0;
+
+    while (true)
+    {
+       // std::cout << "Rendering frame: " << i++ << std::endl;
+
+        overlay->begin_scene();
+        overlay->clear_scene();
+
+        drawESP(overlay);
+        drawESPmisc(overlay);
+        drawMenu(overlay);
+
+        overlay->end_scene();
+    }
+
+    overlay->d2d_shutdown();
+
+    return;
+}
+
 
 void updateWindow() {
     while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         hwnd = FindWindowA("UnrealWindow", NULL);
         OverlayWindow = FindWindow("CEF-OSC-WIDGET", "NVIDIA GeForce Overlay");
         hwnd_active = GetForegroundWindow();
 
-        ShowWindow(OverlayWindow, hwnd_active == hwnd ? SW_SHOW : SW_HIDE);
+        if (hwnd_active == hwnd) {
+
+            ShowWindow(OverlayWindow, SW_SHOW);
+        }
+        else
+        {
+            ShowWindow(OverlayWindow, SW_HIDE);
+        }
 
         RECT desktop;
         const HWND hDesktop = GetDesktopWindow();
@@ -412,49 +561,9 @@ void updateWindow() {
 
         ScreenCenterX = GetSystemMetrics(SM_CXSCREEN) / 2;
         ScreenCenterY = GetSystemMetrics(SM_CYSCREEN) / 2;
+
+
     }
-}
-
-void _init(Nvidia* overlay) {
-    std::thread(checkKeys).detach();
-    std::thread(setupEntities).detach();
-    std::thread(updateWindow).detach();
-    std::thread(updateCamera).detach();
-    std::thread(setCameraCash).detach();
-
-    if (!overlay->window_init()) {
-        std::cerr << "Failed to initialize window." << std::endl;
-        return;
-    }
-
-    if (!overlay->init_d2d()) {
-        std::cerr << "Failed to initialize Direct2D." << std::endl;
-        return;
-    }
-
-    lastTime = std::chrono::high_resolution_clock::now();
-
-    while (true) {
-        overlay->begin_scene();
-        overlay->clear_scene();
-
-        drawESP(overlay);
-        drawESPmisc(overlay);
-        drawMenu(overlay);
-
-        overlay->end_scene();
-
-        frameCount++;
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float> elapsed = currentTime - lastTime;
-        if (elapsed.count() >= 1.0f) {
-            fps = frameCount / elapsed.count();
-            frameCount = 0;
-            lastTime = currentTime;
-        }
-    }
-
-    overlay->d2d_shutdown();
 }
 
 int main() {
